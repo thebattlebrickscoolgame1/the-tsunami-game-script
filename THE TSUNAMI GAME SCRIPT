@@ -1,4 +1,4 @@
--- Test Utility GUI
+-- Test Utility GUI + Key System (Classic Executor Theme)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -12,23 +12,25 @@ local LocalPlayer = Players.LocalPlayer
 -- =========================================================
 
 local CONFIG = {
+    -- Add or edit your valid keys here easily:
+    VALID_KEYS = { 
+        "8f4c9b2e1a7d6f3c5e8b0a9d2f4c1e7b6a3d9f8c5e2b1a4d7f0c3e6b9a2d5f8c"
+    },
 
-    GUI_TITLE = "THE TSUNAMI GAME",
+    -- Edit your key link instructions or URL here:
+    KEY_LINK_TEXT = "Get your key here: https://discord.gg/XfWfaUTTzB",
+    
+    -- Easily change the key instruction text color here (RGB):
+    KEY_LINK_TEXT_COLOR = Color3.fromRGB(255, 255, 255),
 
-    SECTION_OBJECT_CLEANUP = "REBIRTH + TSUNAMI BYPASS",
+    GUI_TITLE = "THE TSUNAMI GAME - MAIN GUI",
+    KEY_GUI_TITLE = "THE TSUNAMI GAME - KEY SYSTEM",
+
+    SECTION_OBJECT_CLEANUP = "BURDEN REMOVAL",
     SECTION_MOVEMENT = "MOVEMENT",
-    SECTION_SPEED_PURCHASE = "SPEED PURCHASE",
-    SECTION_REBIRTH = "REBIRTH",
+    SECTION_AUTOFARM = "AUTOFARM",
     SECTION_UTILITY = "UTILITY",
     SECTION_CUSTOMIZATION = "CUSTOMIZATION",
-
-    TARGETS = {
-        "Tsunamis",
-        "Bario",
-        "Leech",
-        "FraudParts",
-        "RebirthGates"
-    },
 
     DEFAULT_WALKSPEED = "16",
 
@@ -38,18 +40,17 @@ local CONFIG = {
     GUI_BACKGROUND_IMAGE = "",
     GUI_BACKGROUND_TRANSPARENCY = 1,
 
-    -- Edit ALL static UI text here.
-    -- Dynamic status text is generated automatically.
-
     TEXT = {
-
         CLOSE_BUTTON = "X",
 
         OPEN_LOGS_BUTTON = "Open Logs",
         CLEAR_LOGS_BUTTON = "Clear Logs",
         LOGS_TITLE = "Logs",
 
-        DELETE_POOL_BUTTON = "Delete",
+        DELETE_TSUNAMIS_BUTTON = "Delete Tsunamis",
+        DELETE_BARIO_LEECH_BUTTON = "UHH SOME BULLSHIT IDK!",
+        DELETE_FRAUDPARTS_BUTTON = "Delete FraudParts",
+        DELETE_REBIRTHGATES_BUTTON = "Delete RebirthGates",
 
         WALKSPEED_LABEL = "WalkSpeed",
         WALKSPEED_PLACEHOLDER = "Enter WalkSpeed",
@@ -80,787 +81,702 @@ local CONFIG = {
 }
 
 -- =========================================================
--- STATE
+-- FORWARD DECLARATION OF MAIN APP LOADER
 -- =========================================================
 
-local LogsFrame = nil
-
-local speedPurchaseEnabled = false
-local rebirthEnabled = false
-local customSound = nil
+local launchMainGUI
 
 -- =========================================================
--- HELPERS
+-- KEY SYSTEM GUI
 -- =========================================================
 
-local function formatAssetId(id)
-    id = tostring(id or "")
+local KeySystemGui = Instance.new("ScreenGui")
+KeySystemGui.Name = "TestUtilityKeySystem"
+KeySystemGui.ResetOnSpawn = false
+KeySystemGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+KeySystemGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-    if id == "" then
-        return ""
-    end
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Name = "KeyFrame"
+KeyFrame.Size = UDim2.new(0, 380, 0, 225)
+KeyFrame.Position = UDim2.new(0.5, -190, 0.5, -112)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(37, 37, 38)
+KeyFrame.BorderSizePixel = 1
+KeyFrame.BorderColor3 = Color3.fromRGB(55, 55, 58)
+KeyFrame.ZIndex = 1
+KeyFrame.Parent = KeySystemGui
 
-    if string.find(id, "rbxassetid://", 1, true) then
-        return id
-    end
+local KeyHeader = Instance.new("Frame")
+KeyHeader.Name = "Header"
+KeyHeader.Size = UDim2.new(1, 0, 0, 30)
+KeyHeader.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+KeyHeader.BorderSizePixel = 0
+KeyHeader.ZIndex = 2
+KeyHeader.Parent = KeyFrame
 
-    local numericId = string.match(id, "%d+")
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, -40, 1, 0)
+KeyTitle.Position = UDim2.new(0, 8, 0, 0)
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Text = CONFIG.KEY_GUI_TITLE
+KeyTitle.TextColor3 = Color3.fromRGB(220, 220, 220)
+KeyTitle.TextSize = 13
+KeyTitle.Font = Enum.Font.SourceSansBold
+KeyTitle.TextXAlignment = Enum.TextXAlignment.Left
+KeyTitle.ZIndex = 3
+KeyTitle.Parent = KeyHeader
 
-    if numericId then
-        return "rbxassetid://" .. numericId
-    end
+local KeyCloseButton = Instance.new("TextButton")
+KeyCloseButton.Size = UDim2.new(0, 40, 0, 30)
+KeyCloseButton.Position = UDim2.new(1, -40, 0, 0)
+KeyCloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+KeyCloseButton.BorderSizePixel = 0
+KeyCloseButton.Text = CONFIG.TEXT.CLOSE_BUTTON
+KeyCloseButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+KeyCloseButton.TextSize = 14
+KeyCloseButton.Font = Enum.Font.SourceSansBold
+KeyCloseButton.ZIndex = 3
+KeyCloseButton.Parent = KeyHeader
 
-    return id
-end
+KeyCloseButton.MouseEnter:Connect(function()
+    KeyCloseButton.BackgroundColor3 = Color3.fromRGB(232, 17, 35)
+end)
 
-local function isTarget(name)
-    for _, target in ipairs(CONFIG.TARGETS) do
-        if name == target then
-            return true
+KeyCloseButton.MouseLeave:Connect(function()
+    KeyCloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end)
+
+KeyCloseButton.MouseButton1Click:Connect(function()
+    KeySystemGui:Destroy()
+end)
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Size = UDim2.new(1, -30, 0, 30)
+KeyBox.Position = UDim2.new(0, 15, 0, 42)
+KeyBox.BackgroundColor3 = Color3.fromRGB(43, 43, 45)
+KeyBox.BorderSizePixel = 1
+KeyBox.BorderColor3 = Color3.fromRGB(60, 60, 65)
+KeyBox.PlaceholderText = "Enter key here..."
+KeyBox.PlaceholderColor3 = Color3.fromRGB(130, 130, 130)
+KeyBox.Text = ""
+KeyBox.TextColor3 = Color3.fromRGB(240, 240, 240)
+KeyBox.TextSize = 13
+KeyBox.Font = Enum.Font.SourceSans
+KeyBox.ClearTextOnFocus = false
+KeyBox.ZIndex = 2
+KeyBox.Parent = KeyFrame
+
+-- Submit Button close to the textbox
+local SubmitButton = Instance.new("TextButton")
+SubmitButton.Size = UDim2.new(1, -30, 0, 30)
+SubmitButton.Position = UDim2.new(0, 15, 0, 80)
+SubmitButton.BackgroundColor3 = Color3.fromRGB(51, 51, 55)
+SubmitButton.BorderSizePixel = 1
+SubmitButton.BorderColor3 = Color3.fromRGB(65, 65, 70)
+SubmitButton.Text = "Submit Key"
+SubmitButton.TextColor3 = Color3.fromRGB(240, 240, 240)
+SubmitButton.TextSize = 13
+SubmitButton.Font = Enum.Font.SourceSansBold
+SubmitButton.ZIndex = 2
+SubmitButton.Parent = KeyFrame
+
+-- Key Link Text Label positioned a bit lower than the submit button with a bigger font size
+local KeyLinkText = Instance.new("TextLabel")
+KeyLinkText.Size = UDim2.new(1, -30, 0, 22)
+KeyLinkText.Position = UDim2.new(0, 15, 0, 124)
+KeyLinkText.BackgroundTransparency = 1
+KeyLinkText.Text = CONFIG.KEY_LINK_TEXT
+KeyLinkText.TextColor3 = CONFIG.KEY_LINK_TEXT_COLOR
+KeyLinkText.TextSize = 14
+KeyLinkText.Font = Enum.Font.SourceSansBold
+KeyLinkText.TextXAlignment = Enum.TextXAlignment.Center
+KeyLinkText.ZIndex = 2
+KeyLinkText.Parent = KeyFrame
+
+local KeyStatusLabel = Instance.new("TextLabel")
+KeyStatusLabel.Size = UDim2.new(1, -30, 0, 20)
+KeyStatusLabel.Position = UDim2.new(0, 15, 0, 156)
+KeyStatusLabel.BackgroundTransparency = 1
+KeyStatusLabel.Text = ""
+KeyStatusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+KeyStatusLabel.TextSize = 12
+KeyStatusLabel.Font = Enum.Font.SourceSans
+KeyStatusLabel.TextXAlignment = Enum.TextXAlignment.Center
+KeyStatusLabel.ZIndex = 2
+KeyStatusLabel.Parent = KeyFrame
+
+SubmitButton.MouseButton1Click:Connect(function()
+    local enteredKey = KeyBox.Text
+    local isValid = false
+
+    for _, validKey in ipairs(CONFIG.VALID_KEYS) do
+        if enteredKey == validKey then
+            isValid = true
+            break
         end
     end
 
-    return false
-end
-
--- =========================================================
--- SCREEN GUI
--- =========================================================
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TestUtility"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
--- =========================================================
--- MAIN FRAME
--- =========================================================
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 440, 0, 600)
-MainFrame.Position = UDim2.new(0.5, -220, 0.5, -300)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
-MainCorner.Parent = MainFrame
-
--- =========================================================
--- BACKGROUND IMAGE
--- =========================================================
-
-local BackgroundImage = Instance.new("ImageLabel")
-BackgroundImage.Name = "BackgroundImage"
-BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
-BackgroundImage.Position = UDim2.new(0, 0, 0, 0)
-BackgroundImage.BackgroundTransparency = 1
-BackgroundImage.Image = formatAssetId(CONFIG.GUI_BACKGROUND_IMAGE)
-BackgroundImage.ImageTransparency = CONFIG.GUI_BACKGROUND_TRANSPARENCY
-BackgroundImage.ScaleType = Enum.ScaleType.Crop
-BackgroundImage.ZIndex = 0
-BackgroundImage.Parent = MainFrame
-
-local BackgroundCorner = Instance.new("UICorner")
-BackgroundCorner.CornerRadius = UDim.new(0, 12)
-BackgroundCorner.Parent = BackgroundImage
-
--- =========================================================
--- HEADER
--- =========================================================
-
-local Header = Instance.new("Frame")
-Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 48)
-Header.BackgroundTransparency = 1
-Header.ZIndex = 2
-Header.Parent = MainFrame
-
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, -60, 1, 0)
-Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = CONFIG.GUI_TITLE
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 18
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Header
-
-local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 38, 0, 38)
-CloseButton.Position = UDim2.new(1, -42, 0, 5)
-CloseButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-CloseButton.BorderSizePixel = 0
-CloseButton.Text = CONFIG.TEXT.CLOSE_BUTTON
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 18
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.ZIndex = 3
-CloseButton.Parent = Header
-
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 8)
-CloseCorner.Parent = CloseButton
-
--- =========================================================
--- DRAGGING
--- =========================================================
-
-local dragging = false
-local dragStart = nil
-local startPosition = nil
-
-Header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPosition = MainFrame.Position
-    end
-end)
-
-Header.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-
-        local delta = input.Position - dragStart
-
-        MainFrame.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- =========================================================
--- SCROLLING CONTENT
--- =========================================================
-
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Name = "Content"
-ScrollFrame.Size = UDim2.new(1, -20, 1, -60)
-ScrollFrame.Position = UDim2.new(0, 10, 0, 52)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.BorderSizePixel = 0
-ScrollFrame.ScrollBarThickness = 5
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollFrame.ZIndex = 2
-ScrollFrame.Parent = MainFrame
-
-local UIList = Instance.new("UIListLayout")
-UIList.Padding = UDim.new(0, 8)
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Parent = ScrollFrame
-
-local UIPadding = Instance.new("UIPadding")
-UIPadding.PaddingTop = UDim.new(0, 5)
-UIPadding.PaddingBottom = UDim.new(0, 10)
-UIPadding.Parent = ScrollFrame
-
-UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    ScrollFrame.CanvasSize = UDim2.new(
-        0,
-        0,
-        0,
-        UIList.AbsoluteContentSize.Y + 20
-    )
-end)
-
--- =========================================================
--- UI CREATION HELPERS
--- =========================================================
-
-local function createSection(text)
-
-    local label = Instance.new("TextLabel")
-
-    label.Size = UDim2.new(1, -10, 0, 32)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 15
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 2
-    label.Parent = ScrollFrame
-
-    return label
-end
-
-local function createButton(text)
-
-    local button = Instance.new("TextButton")
-
-    button.Size = UDim2.new(1, -10, 0, 38)
-    button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 14
-    button.Font = Enum.Font.GothamBold
-    button.ZIndex = 2
-    button.Parent = ScrollFrame
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = button
-
-    return button
-end
-
-local function createTextBox(placeholder)
-
-    local box = Instance.new("TextBox")
-
-    box.Size = UDim2.new(1, -10, 0, 38)
-    box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    box.BorderSizePixel = 0
-    box.PlaceholderText = placeholder
-    box.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-    box.Text = ""
-    box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.TextSize = 14
-    box.Font = Enum.Font.Gotham
-    box.ClearTextOnFocus = false
-    box.ZIndex = 2
-    box.Parent = ScrollFrame
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = box
-
-    return box
-end
-
-local function createLabel(text)
-
-    local label = Instance.new("TextLabel")
-
-    label.Size = UDim2.new(1, -10, 0, 25)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(210, 210, 210)
-    label.TextSize = 13
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 2
-    label.Parent = ScrollFrame
-
-    return label
-end
-
--- =========================================================
--- LOGGING
--- =========================================================
-
-local function addLog(message, isError)
-
-    if not LogsFrame then
-        return
-    end
-
-    local log = Instance.new("TextLabel")
-
-    log.Size = UDim2.new(1, -10, 0, 24)
-    log.BackgroundTransparency = 1
-    log.Text = os.date("[%H:%M:%S] ") .. tostring(message)
-
-    if isError then
-        log.TextColor3 = Color3.fromRGB(255, 90, 90)
+    if isValid then
+        KeySystemGui:Destroy()
+        launchMainGUI()
     else
-        log.TextColor3 = Color3.fromRGB(220, 220, 220)
+        KeyStatusLabel.Text = "Invalid Key! Please try again."
+    end
+end)
+
+
+-- =========================================================
+-- MAIN GUI FUNCTIONALITY (Loads after successful key check)
+-- =========================================================
+
+launchMainGUI = function()
+    local LogsFrame = nil
+    local speedPurchaseEnabled = false
+    local rebirthEnabled = false
+    local customSound = nil
+
+    local function formatAssetId(id)
+        id = tostring(id or "")
+        if id == "" then
+            return ""
+        end
+        if string.find(id, "rbxassetid://", 1, true) then
+            return id
+        end
+        local numericId = string.match(id, "%d+")
+        if numericId then
+            return "rbxassetid://" .. numericId
+        end
+        return id
     end
 
-    log.TextSize = 12
-    log.Font = Enum.Font.Code
-    log.TextXAlignment = Enum.TextXAlignment.Left
-    log.TextWrapped = true
-    log.ZIndex = 10
-    log.Parent = LogsFrame
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "TestUtility"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-    LogsFrame.CanvasPosition = Vector2.new(
-        0,
-        math.max(0, LogsFrame.AbsoluteCanvasSize.Y)
-    )
-end
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 680, 0, 420)
+    MainFrame.Position = UDim2.new(0.5, -340, 0.5, -210)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(37, 37, 38)
+    MainFrame.BorderSizePixel = 1
+    MainFrame.BorderColor3 = Color3.fromRGB(55, 55, 58)
+    MainFrame.Parent = ScreenGui
 
-local function createLogs()
+    local BackgroundImage = Instance.new("ImageLabel")
+    BackgroundImage.Name = "BackgroundImage"
+    BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
+    BackgroundImage.Position = UDim2.new(0, 0, 0, 0)
+    BackgroundImage.BackgroundTransparency = 1
+    BackgroundImage.Image = formatAssetId(CONFIG.GUI_BACKGROUND_IMAGE)
+    BackgroundImage.ImageTransparency = CONFIG.GUI_BACKGROUND_TRANSPARENCY
+    BackgroundImage.ScaleType = Enum.ScaleType.Crop
+    BackgroundImage.ZIndex = 0
+    BackgroundImage.Parent = MainFrame
 
-    if LogsFrame then
-        LogsFrame.Visible = true
-        return
-    end
+    local Header = Instance.new("Frame")
+    Header.Name = "Header"
+    Header.Size = UDim2.new(1, 0, 0, 30)
+    Header.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Header.BorderSizePixel = 0
+    Header.ZIndex = 2
+    Header.Parent = MainFrame
 
-    LogsFrame = Instance.new("ScrollingFrame")
-    LogsFrame.Name = "Logs"
-    LogsFrame.Size = UDim2.new(0, 420, 0, 300)
-    LogsFrame.Position = UDim2.new(0.5, -210, 0.5, -150)
-    LogsFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    LogsFrame.BorderSizePixel = 0
-    LogsFrame.ScrollBarThickness = 5
-    LogsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    LogsFrame.ZIndex = 10
-    LogsFrame.Parent = ScreenGui
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(1, -50, 1, 0)
+    Title.Position = UDim2.new(0, 8, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = CONFIG.GUI_TITLE
+    Title.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Title.TextSize = 13
+    Title.Font = Enum.Font.SourceSansBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Header
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = LogsFrame
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Name = "CloseButton"
+    CloseButton.Size = UDim2.new(0, 40, 0, 30)
+    CloseButton.Position = UDim2.new(1, -40, 0, 0)
+    CloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    CloseButton.BorderSizePixel = 0
+    CloseButton.Text = CONFIG.TEXT.CLOSE_BUTTON
+    CloseButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+    CloseButton.TextSize = 14
+    CloseButton.Font = Enum.Font.SourceSansBold
+    CloseButton.ZIndex = 3
+    CloseButton.Parent = Header
 
-    local padding = Instance.new("UIPadding")
-    padding.PaddingTop = UDim.new(0, 35)
-    padding.PaddingLeft = UDim.new(0, 5)
-    padding.Parent = LogsFrame
+    CloseButton.MouseEnter:Connect(function()
+        CloseButton.BackgroundColor3 = Color3.fromRGB(232, 17, 35)
+    end)
 
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 2)
-    layout.Parent = LogsFrame
+    CloseButton.MouseLeave:Connect(function()
+        CloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    end)
 
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    -- Draggable Header
+    local dragging = false
+    local dragStart = nil
+    local startPosition = nil
 
-        if LogsFrame then
-            LogsFrame.CanvasSize = UDim2.new(
-                0,
-                0,
-                0,
-                layout.AbsoluteContentSize.Y + 45
+    Header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPosition = MainFrame.Position
+        end
+    end)
+
+    Header.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(
+                startPosition.X.Scale,
+                startPosition.X.Offset + delta.X,
+                startPosition.Y.Scale,
+                startPosition.Y.Offset + delta.Y
             )
         end
     end)
 
-    local logsTitle = Instance.new("TextLabel")
-    logsTitle.Size = UDim2.new(1, -50, 0, 30)
-    logsTitle.Position = UDim2.new(0, 10, 0, 2)
-    logsTitle.BackgroundTransparency = 1
-    logsTitle.Text = CONFIG.TEXT.LOGS_TITLE
-    logsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    logsTitle.TextSize = 15
-    logsTitle.Font = Enum.Font.GothamBold
-    logsTitle.TextXAlignment = Enum.TextXAlignment.Left
-    logsTitle.ZIndex = 11
-    logsTitle.Parent = LogsFrame
+    local ScrollFrame = Instance.new("ScrollingFrame")
+    ScrollFrame.Name = "Content"
+    ScrollFrame.Size = UDim2.new(1, -16, 1, -42)
+    ScrollFrame.Position = UDim2.new(0, 8, 0, 36)
+    ScrollFrame.BackgroundTransparency = 1
+    ScrollFrame.BorderSizePixel = 0
+    ScrollFrame.ScrollBarThickness = 4
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ScrollFrame.ZIndex = 2
+    ScrollFrame.Parent = MainFrame
 
-    local closeLogs = Instance.new("TextButton")
-    closeLogs.Size = UDim2.new(0, 32, 0, 28)
-    closeLogs.Position = UDim2.new(1, -38, 0, 3)
-    closeLogs.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    closeLogs.BorderSizePixel = 0
-    closeLogs.Text = CONFIG.TEXT.CLOSE_BUTTON
-    closeLogs.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeLogs.TextSize = 15
-    closeLogs.Font = Enum.Font.GothamBold
-    closeLogs.ZIndex = 11
-    closeLogs.Parent = LogsFrame
+    local UIList = Instance.new("UIListLayout")
+    UIList.Padding = UDim.new(0, 6)
+    UIList.SortOrder = Enum.SortOrder.LayoutOrder
+    UIList.Parent = ScrollFrame
 
-    local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 7)
-    closeCorner.Parent = closeLogs
+    local UIPadding = Instance.new("UIPadding")
+    UIPadding.PaddingTop = UDim.new(0, 2)
+    UIPadding.PaddingBottom = UDim.new(0, 10)
+    UIPadding.Parent = ScrollFrame
 
-    closeLogs.MouseButton1Click:Connect(function()
+    UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 15)
+    end)
 
+    local function createSection(text)
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 24)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.TextColor3 = Color3.fromRGB(180, 180, 180)
+        label.TextSize = 12
+        label.Font = Enum.Font.SourceSansBold
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.ZIndex = 2
+        label.Parent = ScrollFrame
+        return label
+    end
+
+    local function createButton(text)
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 0, 30)
+        button.BackgroundColor3 = Color3.fromRGB(51, 51, 55)
+        button.BorderSizePixel = 1
+        button.BorderColor3 = Color3.fromRGB(65, 65, 70)
+        button.Text = text
+        button.TextColor3 = Color3.fromRGB(240, 240, 240)
+        button.TextSize = 13
+        button.Font = Enum.Font.SourceSans
+        button.ZIndex = 2
+        button.Parent = ScrollFrame
+        return button
+    end
+
+    local function createTextBox(placeholder)
+        local box = Instance.new("TextBox")
+        box.Size = UDim2.new(1, 0, 0, 30)
+        box.BackgroundColor3 = Color3.fromRGB(43, 43, 45)
+        box.BorderSizePixel = 1
+        box.BorderColor3 = Color3.fromRGB(60, 60, 65)
+        box.PlaceholderText = placeholder
+        box.PlaceholderColor3 = Color3.fromRGB(130, 130, 130)
+        box.Text = ""
+        box.TextColor3 = Color3.fromRGB(240, 240, 240)
+        box.TextSize = 13
+        box.Font = Enum.Font.SourceSans
+        box.ClearTextOnFocus = false
+        box.ZIndex = 2
+        box.Parent = ScrollFrame
+        return box
+    end
+
+    local function createLabel(text)
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 20)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 12
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.ZIndex = 2
+        label.Parent = ScrollFrame
+        return label
+    end
+
+    local function addLog(message, isError)
+        if not LogsFrame then
+            return
+        end
+        local log = Instance.new("TextLabel")
+        log.Size = UDim2.new(1, -10, 0, 20)
+        log.BackgroundTransparency = 1
+        log.Text = os.date("[%H:%M:%S] ") .. tostring(message)
+        if isError then
+            log.TextColor3 = Color3.fromRGB(255, 90, 90)
+        else
+            log.TextColor3 = Color3.fromRGB(220, 220, 220)
+        end
+        log.TextSize = 12
+        log.Font = Enum.Font.Code
+        log.TextXAlignment = Enum.TextXAlignment.Left
+        log.TextWrapped = true
+        log.ZIndex = 10
+        log.Parent = LogsFrame
+
+        LogsFrame.CanvasPosition = Vector2.new(0, math.max(0, LogsFrame.AbsoluteCanvasSize.Y))
+    end
+
+    local function createLogs()
         if LogsFrame then
-            LogsFrame.Visible = false
+            LogsFrame.Visible = true
+            return
         end
-    end)
 
-    local clearLogs = Instance.new("TextButton")
-    clearLogs.Size = UDim2.new(0, 90, 0, 28)
-    clearLogs.Position = UDim2.new(1, -135, 0, 3)
-    clearLogs.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    clearLogs.BorderSizePixel = 0
-    clearLogs.Text = CONFIG.TEXT.CLEAR_LOGS_BUTTON
-    clearLogs.TextColor3 = Color3.fromRGB(255, 255, 255)
-    clearLogs.TextSize = 12
-    clearLogs.Font = Enum.Font.GothamBold
-    clearLogs.ZIndex = 11
-    clearLogs.Parent = LogsFrame
+        LogsFrame = Instance.new("ScrollingFrame")
+        LogsFrame.Name = "Logs"
+        LogsFrame.Size = UDim2.new(0, 500, 0, 300)
+        LogsFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
+        LogsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        LogsFrame.BorderSizePixel = 1
+        LogsFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
+        LogsFrame.ScrollBarThickness = 4
+        LogsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        LogsFrame.ZIndex = 10
+        LogsFrame.Parent = ScreenGui
 
-    local clearCorner = Instance.new("UICorner")
-    clearCorner.CornerRadius = UDim.new(0, 7)
-    clearCorner.Parent = clearLogs
+        local padding = Instance.new("UIPadding")
+        padding.PaddingTop = UDim.new(0, 35)
+        padding.PaddingLeft = UDim.new(0, 5)
+        padding.Parent = LogsFrame
 
-    clearLogs.MouseButton1Click:Connect(function()
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 2)
+        layout.Parent = LogsFrame
 
-        for _, child in ipairs(LogsFrame:GetChildren()) do
-
-            if child:IsA("TextLabel") and child ~= logsTitle then
-                child:Destroy()
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            if LogsFrame then
+                LogsFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 45)
             end
-        end
-
-        addLog("Logs cleared", false)
-    end)
-
-    addLog("Logs ready", false)
-end
-
--- =========================================================
--- OBJECT CLEANUP
--- =========================================================
-
-createSection(CONFIG.SECTION_OBJECT_CLEANUP)
-
-local deletePoolButton = createButton(
-    CONFIG.TEXT.DELETE_POOL_BUTTON
-)
-
-deletePoolButton.MouseButton1Click:Connect(function()
-
-    local found = 0
-    local removed = 0
-
-    for _, object in ipairs(game:GetDescendants()) do
-
-        if isTarget(object.Name) then
-
-            found += 1
-
-            local success = pcall(function()
-                object:Destroy()
-            end)
-
-            if success then
-                removed += 1
-            end
-        end
-    end
-
-    addLog(
-        "Cleanup found " .. found .. " objects and removed " .. removed,
-        false
-    )
-end)
-
--- =========================================================
--- MOVEMENT
--- =========================================================
-
-createSection(CONFIG.SECTION_MOVEMENT)
-
-createLabel(CONFIG.TEXT.WALKSPEED_LABEL)
-
-local walkSpeedBox = createTextBox(
-    CONFIG.TEXT.WALKSPEED_PLACEHOLDER
-)
-
-walkSpeedBox.Text = CONFIG.DEFAULT_WALKSPEED
-
-local setWalkSpeedButton = createButton(
-    CONFIG.TEXT.SET_WALKSPEED_BUTTON
-)
-
-setWalkSpeedButton.MouseButton1Click:Connect(function()
-
-    local value = tonumber(walkSpeedBox.Text)
-
-    if not value then
-        addLog("Invalid WalkSpeed value", true)
-        return
-    end
-
-    local character = LocalPlayer.Character
-
-    if not character then
-        addLog("Character not found", true)
-        return
-    end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-    if not humanoid then
-        addLog("Humanoid not found", true)
-        return
-    end
-
-    humanoid.WalkSpeed = value
-
-    addLog("WalkSpeed set to " .. value, false)
-end)
-
--- =========================================================
--- SPEED PURCHASE
--- =========================================================
-
-createSection(CONFIG.SECTION_SPEED_PURCHASE)
-
-local speedPurchaseButton = createButton(
-    CONFIG.TEXT.SPEED_PURCHASE_TOGGLE_OFF
-)
-
-speedPurchaseButton.MouseButton1Click:Connect(function()
-
-    speedPurchaseEnabled = not speedPurchaseEnabled
-
-    if speedPurchaseEnabled then
-        speedPurchaseButton.Text =
-            CONFIG.TEXT.SPEED_PURCHASE_TOGGLE_ON
-    else
-        speedPurchaseButton.Text =
-            CONFIG.TEXT.SPEED_PURCHASE_TOGGLE_OFF
-    end
-
-    addLog(
-        "Auto Speed Purchase: "
-        .. (speedPurchaseEnabled and "ON" or "OFF"),
-        false
-    )
-end)
-
-task.spawn(function()
-
-    while ScreenGui.Parent do
-
-        if speedPurchaseEnabled then
-
-            pcall(function()
-
-                game:GetService("ReplicatedStorage")
-                    :WaitForChild("RemoteEvents")
-                    :WaitForChild("PurchaseSpeed")
-                    :FireServer(CONFIG.SPEED_PURCHASE_AMOUNT)
-
-            end)
-        end
-
-        task.wait(CONFIG.AUTOMATION_DELAY)
-    end
-end)
-
--- =========================================================
--- REBIRTH
--- =========================================================
-
-createSection(CONFIG.SECTION_REBIRTH)
-
-local rebirthButton = createButton(
-    CONFIG.TEXT.REBIRTH_TOGGLE_OFF
-)
-
-rebirthButton.MouseButton1Click:Connect(function()
-
-    rebirthEnabled = not rebirthEnabled
-
-    if rebirthEnabled then
-        rebirthButton.Text =
-            CONFIG.TEXT.REBIRTH_TOGGLE_ON
-    else
-        rebirthButton.Text =
-            CONFIG.TEXT.REBIRTH_TOGGLE_OFF
-    end
-
-    addLog(
-        "Auto Rebirth: "
-        .. (rebirthEnabled and "ON" or "OFF"),
-        false
-    )
-end)
-
-task.spawn(function()
-
-    while ScreenGui.Parent do
-
-        if rebirthEnabled then
-
-            pcall(function()
-
-                game:GetService("ReplicatedStorage")
-                    :WaitForChild("RemoteEvents")
-                    :WaitForChild("RequestRebirth")
-                    :FireServer()
-
-            end)
-        end
-
-        task.wait(CONFIG.AUTOMATION_DELAY)
-    end
-end)
-
--- =========================================================
--- UTILITY
--- =========================================================
-
-createSection(CONFIG.SECTION_UTILITY)
-
-createLabel(CONFIG.TEXT.FOV_LABEL)
-
-local fovBox = createTextBox(
-    CONFIG.TEXT.FOV_PLACEHOLDER
-)
-
-fovBox.Text = "70"
-
-local setFovButton = createButton(
-    CONFIG.TEXT.SET_FOV_BUTTON
-)
-
-setFovButton.MouseButton1Click:Connect(function()
-
-    local value = tonumber(fovBox.Text)
-
-    if not value then
-        addLog("Invalid FOV value", true)
-        return
-    end
-
-    workspace.CurrentCamera.FieldOfView = value
-
-    addLog("FOV set to " .. value, false)
-end)
-
-createLabel(CONFIG.TEXT.JUMPPOWER_LABEL)
-
-local jumpPowerBox = createTextBox(
-    CONFIG.TEXT.JUMPPOWER_PLACEHOLDER
-)
-
-jumpPowerBox.Text = "50"
-
-local setJumpPowerButton = createButton(
-    CONFIG.TEXT.SET_JUMPPOWER_BUTTON
-)
-
-setJumpPowerButton.MouseButton1Click:Connect(function()
-
-    local value = tonumber(jumpPowerBox.Text)
-
-    if not value then
-        addLog("Invalid JumpPower value", true)
-        return
-    end
-
-    local character = LocalPlayer.Character
-
-    if not character then
-        addLog("Character not found", true)
-        return
-    end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-    if not humanoid then
-        addLog("Humanoid not found", true)
-        return
-    end
-
-    humanoid.UseJumpPower = true
-    humanoid.JumpPower = value
-
-    addLog("JumpPower set to " .. value, false)
-end)
-
--- =========================================================
--- CUSTOMIZATION
--- =========================================================
-
-createSection(CONFIG.SECTION_CUSTOMIZATION)
-
-createLabel(CONFIG.TEXT.BACKGROUND_ID_LABEL)
-
-local backgroundIdBox = createTextBox(
-    CONFIG.TEXT.BACKGROUND_ID_PLACEHOLDER
-)
-
-local applyBackgroundButton = createButton(
-    CONFIG.TEXT.APPLY_BACKGROUND_BUTTON
-)
-
-applyBackgroundButton.MouseButton1Click:Connect(function()
-
-    local id = formatAssetId(backgroundIdBox.Text)
-
-    if id == "" then
-        addLog("Invalid background image ID", true)
-        return
-    end
-
-    BackgroundImage.Image = id
-
-    addLog("GUI background changed", false)
-end)
-
-createLabel(CONFIG.TEXT.BACKGROUND_TRANSPARENCY_LABEL)
-
-local transparencyBox = createTextBox(
-    CONFIG.TEXT.BACKGROUND_TRANSPARENCY_PLACEHOLDER
-)
-
-transparencyBox.Text =
-    tostring(CONFIG.GUI_BACKGROUND_TRANSPARENCY)
-
-local applyTransparencyButton = createButton(
-    CONFIG.TEXT.APPLY_TRANSPARENCY_BUTTON
-)
-
-applyTransparencyButton.MouseButton1Click:Connect(function()
-
-    local value = tonumber(transparencyBox.Text)
-
-    if not value then
-        addLog("Invalid transparency value", true)
-        return
-    end
-
-    value = math.clamp(value, 0, 1)
-
-    BackgroundImage.ImageTransparency = value
-
-    addLog(
-        "Background transparency set to " .. value,
-        false
-    )
-end)
-
--- =========================================================
--- LOGS BUTTON
--- =========================================================
-
-local logsButton = createButton(
-    CONFIG.TEXT.OPEN_LOGS_BUTTON
-)
-
-logsButton.MouseButton1Click:Connect(function()
-
-    createLogs()
-
-    if LogsFrame then
-        LogsFrame.Visible = true
-    end
-end)
-
--- =========================================================
--- CLOSE
--- =========================================================
-
-CloseButton.MouseButton1Click:Connect(function()
-
-    speedPurchaseEnabled = false
-    rebirthEnabled = false
-
-    if customSound then
-
-        pcall(function()
-            customSound:Stop()
-            customSound:Destroy()
         end)
 
-        customSound = nil
+        local logsTitle = Instance.new("TextLabel")
+        logsTitle.Size = UDim2.new(1, -50, 0, 25)
+        logsTitle.Position = UDim2.new(0, 8, 0, 4)
+        logsTitle.BackgroundTransparency = 1
+        logsTitle.Text = CONFIG.TEXT.LOGS_TITLE
+        logsTitle.TextColor3 = Color3.fromRGB(220, 220, 220)
+        logsTitle.TextSize = 13
+        logsTitle.Font = Enum.Font.SourceSansBold
+        logsTitle.TextXAlignment = Enum.TextXAlignment.Left
+        logsTitle.ZIndex = 11
+        logsTitle.Parent = LogsFrame
+
+        local closeLogs = Instance.new("TextButton")
+        closeLogs.Size = UDim2.new(0, 30, 0, 24)
+        closeLogs.Position = UDim2.new(1, -35, 0, 4)
+        closeLogs.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        closeLogs.BorderSizePixel = 0
+        closeLogs.Text = CONFIG.TEXT.CLOSE_BUTTON
+        closeLogs.TextColor3 = Color3.fromRGB(220, 220, 220)
+        closeLogs.TextSize = 13
+        closeLogs.Font = Enum.Font.SourceSansBold
+        closeLogs.ZIndex = 11
+        closeLogs.Parent = LogsFrame
+
+        closeLogs.MouseButton1Click:Connect(function()
+            if LogsFrame then
+                LogsFrame.Visible = false
+            end
+        end)
+
+        local clearLogs = Instance.new("TextButton")
+        clearLogs.Size = UDim2.new(0, 80, 0, 24)
+        clearLogs.Position = UDim2.new(1, -120, 0, 4)
+        clearLogs.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        clearLogs.BorderSizePixel = 0
+        clearLogs.Text = CONFIG.TEXT.CLEAR_LOGS_BUTTON
+        clearLogs.TextColor3 = Color3.fromRGB(220, 220, 220)
+        clearLogs.TextSize = 11
+        clearLogs.Font = Enum.Font.SourceSansBold
+        clearLogs.ZIndex = 11
+        clearLogs.Parent = LogsFrame
+
+        clearLogs.MouseButton1Click:Connect(function()
+            for _, child in ipairs(LogsFrame:GetChildren()) do
+                if child:IsA("TextLabel") and child ~= logsTitle then
+                    child:Destroy()
+                end
+            end
+            addLog("Logs cleared", false)
+        end)
+
+        addLog("Logs ready", false)
     end
 
-    if LogsFrame then
-        LogsFrame:Destroy()
-        LogsFrame = nil
-    end
+    -- Object Cleanup Section
+    createSection(CONFIG.SECTION_OBJECT_CLEANUP)
 
-    ScreenGui:Destroy()
-end)
+    local deleteTsunamisButton = createButton(CONFIG.TEXT.DELETE_TSUNAMIS_BUTTON)
+    deleteTsunamisButton.MouseButton1Click:Connect(function()
+        local found, removed = 0, 0
+        for _, object in ipairs(game:GetDescendants()) do
+            if object.Name == "Tsunamis" then
+                found += 1
+                if pcall(function() object:Destroy() end) then
+                    removed += 1
+                end
+            end
+        end
+        addLog("Tsunamis cleanup found " .. found .. " and removed " .. removed, false)
+    end)
+
+    local deleteBarioLeechButton = createButton(CONFIG.TEXT.DELETE_BARIO_LEECH_BUTTON)
+    deleteBarioLeechButton.MouseButton1Click:Connect(function()
+        local found, removed = 0, 0
+        for _, object in ipairs(game:GetDescendants()) do
+            if object.Name == "Bario" or object.Name == "Leech" then
+                found += 1
+                if pcall(function() object:Destroy() end) then
+                    removed += 1
+                end
+            end
+        end
+        addLog("Bario + Leech cleanup found " .. found .. " and removed " .. removed, false)
+    end)
+
+    local deleteFraudPartsButton = createButton(CONFIG.TEXT.DELETE_FRAUDPARTS_BUTTON)
+    deleteFraudPartsButton.MouseButton1Click:Connect(function()
+        local found, removed = 0, 0
+        for _, object in ipairs(game:GetDescendants()) do
+            if object.Name == "FraudParts" then
+                found += 1
+                if pcall(function() object:Destroy() end) then
+                    removed += 1
+                end
+            end
+        end
+        addLog("FraudParts cleanup found " .. found .. " and removed " .. removed, false)
+    end)
+
+    local deleteRebirthGatesButton = createButton(CONFIG.TEXT.DELETE_REBIRTHGATES_BUTTON)
+    deleteRebirthGatesButton.MouseButton1Click:Connect(function()
+        local found, removed = 0, 0
+        for _, object in ipairs(game:GetDescendants()) do
+            if object.Name == "RebirthGates" then
+                found += 1
+                if pcall(function() object:Destroy() end) then
+                    removed += 1
+                end
+            end
+        end
+        addLog("RebirthGates cleanup found " .. found .. " and removed " .. removed, false)
+    end)
+
+    -- Movement Section
+    createSection(CONFIG.SECTION_MOVEMENT)
+    createLabel(CONFIG.TEXT.WALKSPEED_LABEL)
+
+    local walkSpeedBox = createTextBox(CONFIG.TEXT.WALKSPEED_PLACEHOLDER)
+    walkSpeedBox.Text = CONFIG.DEFAULT_WALKSPEED
+
+    local setWalkSpeedButton = createButton(CONFIG.TEXT.SET_WALKSPEED_BUTTON)
+    setWalkSpeedButton.MouseButton1Click:Connect(function()
+        local value = tonumber(walkSpeedBox.Text)
+        if not value then
+            addLog("Invalid WalkSpeed value", true)
+            return
+        end
+        local character = LocalPlayer.Character
+        if not character then
+            addLog("Character not found", true)
+            return
+        end
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then
+            addLog("Humanoid not found", true)
+            return
+        end
+        humanoid.WalkSpeed = value
+        addLog("WalkSpeed set to " .. value, false)
+    end)
+
+    -- Autofarm Section
+    createSection(CONFIG.SECTION_AUTOFARM)
+
+    local speedPurchaseButton = createButton(CONFIG.TEXT.SPEED_PURCHASE_TOGGLE_OFF)
+    speedPurchaseButton.MouseButton1Click:Connect(function()
+        speedPurchaseEnabled = not speedPurchaseEnabled
+        if speedPurchaseEnabled then
+            speedPurchaseButton.Text = CONFIG.TEXT.SPEED_PURCHASE_TOGGLE_ON
+        else
+            speedPurchaseButton.Text = CONFIG.TEXT.SPEED_PURCHASE_TOGGLE_OFF
+        end
+        addLog("Auto Speed Purchase: " .. (speedPurchaseEnabled and "ON" or "OFF"), false)
+    end)
+
+    task.spawn(function()
+        while ScreenGui.Parent do
+            if speedPurchaseEnabled then
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PurchaseSpeed"):FireServer(CONFIG.SPEED_PURCHASE_AMOUNT)
+                end)
+            end
+            task.wait(CONFIG.AUTOMATION_DELAY)
+        end
+    end)
+
+    local rebirthButton = createButton(CONFIG.TEXT.REBIRTH_TOGGLE_OFF)
+    rebirthButton.MouseButton1Click:Connect(function()
+        rebirthEnabled = not rebirthEnabled
+        if rebirthEnabled then
+            rebirthButton.Text = CONFIG.TEXT.REBIRTH_TOGGLE_ON
+        else
+            rebirthButton.Text = CONFIG.TEXT.REBIRTH_TOGGLE_OFF
+        end
+        addLog("Auto Rebirth: " .. (rebirthEnabled and "ON" or "OFF"), false)
+    end)
+
+    task.spawn(function()
+        while ScreenGui.Parent do
+            if rebirthEnabled then
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestRebirth"):FireServer()
+                end)
+            end
+            task.wait(CONFIG.AUTOMATION_DELAY)
+        end
+    end)
+
+    -- Utility Section
+    createSection(CONFIG.SECTION_UTILITY)
+
+    local logsButton = createButton(CONFIG.TEXT.OPEN_LOGS_BUTTON)
+    logsButton.MouseButton1Click:Connect(function()
+        createLogs()
+        if LogsFrame then
+            LogsFrame.Visible = true
+        end
+    end)
+
+    createLabel(CONFIG.TEXT.FOV_LABEL)
+    local fovBox = createTextBox(CONFIG.TEXT.FOV_PLACEHOLDER)
+    fovBox.Text = "70"
+
+    local setFovButton = createButton(CONFIG.TEXT.SET_FOV_BUTTON)
+    setFovButton.MouseButton1Click:Connect(function()
+        local value = tonumber(fovBox.Text)
+        if not value then
+            addLog("Invalid FOV value", true)
+            return
+        end
+        workspace.CurrentCamera.FieldOfView = value
+        addLog("FOV set to " .. value, false)
+    end)
+
+    createLabel(CONFIG.TEXT.JUMPPOWER_LABEL)
+    local jumpPowerBox = createTextBox(CONFIG.TEXT.JUMPPOWER_PLACEHOLDER)
+    jumpPowerBox.Text = "50"
+
+    local setJumpPowerButton = createButton(CONFIG.TEXT.SET_JUMPPOWER_BUTTON)
+    setJumpPowerButton.MouseButton1Click:Connect(function()
+        local value = tonumber(jumpPowerBox.Text)
+        if not value then
+            addLog("Invalid JumpPower value", true)
+            return
+        end
+        local character = LocalPlayer.Character
+        if not character then
+            addLog("Character not found", true)
+            return
+        end
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then
+            addLog("Humanoid not found", true)
+            return
+        end
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = value
+        addLog("JumpPower set to " .. value, false)
+    end)
+
+    -- Customization Section
+    createSection(CONFIG.SECTION_CUSTOMIZATION)
+    createLabel(CONFIG.TEXT.BACKGROUND_ID_LABEL)
+
+    local backgroundIdBox = createTextBox(CONFIG.TEXT.BACKGROUND_ID_PLACEHOLDER)
+    local applyBackgroundButton = createButton(CONFIG.TEXT.APPLY_BACKGROUND_BUTTON)
+    applyBackgroundButton.MouseButton1Click:Connect(function()
+        local id = formatAssetId(backgroundIdBox.Text)
+        if id == "" then
+            addLog("Invalid background image ID", true)
+            return
+        end
+        BackgroundImage.Image = id
+        addLog("GUI background changed", false)
+    end)
+
+    createLabel(CONFIG.TEXT.BACKGROUND_TRANSPARENCY_LABEL)
+    local transparencyBox = createTextBox(CONFIG.TEXT.BACKGROUND_TRANSPARENCY_PLACEHOLDER)
+    transparencyBox.Text = tostring(CONFIG.GUI_BACKGROUND_TRANSPARENCY)
+
+    local applyTransparencyButton = createButton(CONFIG.TEXT.APPLY_TRANSPARENCY_BUTTON)
+    applyTransparencyButton.MouseButton1Click:Connect(function()
+        local value = tonumber(transparencyBox.Text)
+        if not value then
+            addLog("Invalid transparency value", true)
+            return
+        end
+        value = math.clamp(value, 0, 1)
+        BackgroundImage.ImageTransparency = value
+        addLog("Background transparency set to " .. value, false)
+    end)
+
+    -- Close Button Action
+    CloseButton.MouseButton1Click:Connect(function()
+        speedPurchaseEnabled = false
+        rebirthEnabled = false
+        if customSound then
+            pcall(function()
+                customSound:Stop()
+                customSound:Destroy()
+            end)
+            customSound = nil
+        end
+        if LogsFrame then
+            LogsFrame:Destroy()
+            LogsFrame = nil
+        end
+        ScreenGui:Destroy()
+    end)
+end
