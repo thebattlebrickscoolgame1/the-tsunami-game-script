@@ -1,4 +1,4 @@
--- Test Utility GUI + Key System (Classic Executor Theme)
+-- Test Utility GUI (Classic Executor Theme)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -12,28 +12,17 @@ local LocalPlayer = Players.LocalPlayer
 -- =========================================================
 
 local CONFIG = {
-    -- Add or edit your valid keys here easily:
-    VALID_KEYS = {
-        "8f4c9b2e1a7d6f3c5e8b0a9d2f4c1e7b6a3d9f8c5e2b1a4d7f0c3e6b9a2d5f8c"
-    },
-
-    -- Edit your key link instructions or URL here:
-    KEY_LINK_TEXT = "Get your key here: https://discord.gg/XfWfaUTTzB",
-    
-    -- Easily change the key instruction text color here (RGB):
-    KEY_LINK_TEXT_COLOR = Color3.fromRGB(255, 255, 255),
-
     GUI_TITLE = "THE TSUNAMI GAME - MAIN GUI",
-    KEY_GUI_TITLE = "THE TSUNAMI GAME - KEY SYSTEM",
 
     SECTION_SHORTCUTS = "SHORTCUTS",
-    SECTION_OBJECT_CLEANUP = "BURDEN REMOVAL",
+    SECTION_OBJECT_CLEANUP = "OBJ DELETION",
     SECTION_MOVEMENT = "MOVEMENT",
     SECTION_AUTOFARM = "AUTOFARM",
     SECTION_UTILITY = "UTILITY",
     SECTION_CUSTOMIZATION = "CUSTOMIZATION",
 
     DEFAULT_WALKSPEED = "16",
+    DEFAULT_JUMPPOWER = "50",
 
     SPEED_PURCHASE_AMOUNT = 10,
     AUTOMATION_DELAY = 0.1,
@@ -51,6 +40,7 @@ local CONFIG = {
         SELL_INVENTORY_BUTTON = "Sell Inventory",
         SELL_EQUIPPED_BUTTON = "Sell Current Item",
         CHECK_WORTH_BUTTON = "Check Item Worth",
+        TELEPORT_SAFEZONE_BUTTON = "Teleport to SafeZone",
 
         DELETE_TSUNAMIS_BUTTON = "Delete Tsunamis",
         DELETE_BARIO_LEECH_BUTTON = "UHH SOME BULLSHIT IDK!",
@@ -61,6 +51,10 @@ local CONFIG = {
         WALKSPEED_PLACEHOLDER = "Enter WalkSpeed",
         SET_WALKSPEED_BUTTON = "Set WalkSpeed",
 
+        JUMPPOWER_LABEL = "JumpPower",
+        JUMPPOWER_PLACEHOLDER = "Enter JumpPower",
+        SET_JUMPPOWER_BUTTON = "Set JumpPower",
+
         SPEED_PURCHASE_TOGGLE_OFF = "Auto Speed Purchase: OFF",
         SPEED_PURCHASE_TOGGLE_ON = "Auto Speed Purchase: ON",
 
@@ -70,13 +64,14 @@ local CONFIG = {
         REBIRTH_TOGGLE_OFF = "Auto Rebirth: OFF",
         REBIRTH_TOGGLE_ON = "Auto Rebirth: ON",
 
+        BASE_UPGRADE_TOGGLE_OFF = "Auto Base Upgrade: OFF",
+        BASE_UPGRADE_TOGGLE_ON = "Auto Base Upgrade: ON",
+
         FOV_LABEL = "FOV",
         FOV_PLACEHOLDER = "Enter FOV",
         SET_FOV_BUTTON = "Set FOV",
 
-        JUMPPOWER_LABEL = "JumpPower",
-        JUMPPOWER_PLACEHOLDER = "Enter JumpPower",
-        SET_JUMPPOWER_BUTTON = "Set JumpPower",
+        DEX_EXPLORER_BUTTON = "Dex Explorer",
 
         BACKGROUND_ID_LABEL = "GUI Background Image ID",
         BACKGROUND_ID_PLACEHOLDER = "Paste Roblox Image/Decal ID",
@@ -89,159 +84,15 @@ local CONFIG = {
 }
 
 -- =========================================================
--- FORWARD DECLARATION OF MAIN APP LOADER
+-- MAIN GUI FUNCTIONALITY
 -- =========================================================
 
-local launchMainGUI
-
--- =========================================================
--- KEY SYSTEM GUI
--- =========================================================
-
-local KeySystemGui = Instance.new("ScreenGui")
-KeySystemGui.Name = "TestUtilityKeySystem"
-KeySystemGui.ResetOnSpawn = false
-KeySystemGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-KeySystemGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local KeyFrame = Instance.new("Frame")
-KeyFrame.Name = "KeyFrame"
-KeyFrame.Size = UDim2.new(0, 380, 0, 225)
-KeyFrame.Position = UDim2.new(0.5, -190, 0.5, -112)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(37, 37, 38)
-KeyFrame.BorderSizePixel = 1
-KeyFrame.BorderColor3 = Color3.fromRGB(55, 55, 58)
-KeyFrame.ZIndex = 1
-KeyFrame.Parent = KeySystemGui
-
-local KeyHeader = Instance.new("Frame")
-KeyHeader.Name = "Header"
-KeyHeader.Size = UDim2.new(1, 0, 0, 30)
-KeyHeader.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-KeyHeader.BorderSizePixel = 0
-KeyHeader.ZIndex = 2
-KeyHeader.Parent = KeyFrame
-
-local KeyTitle = Instance.new("TextLabel")
-KeyTitle.Size = UDim2.new(1, -40, 1, 0)
-KeyTitle.Position = UDim2.new(0, 8, 0, 0)
-KeyTitle.BackgroundTransparency = 1
-KeyTitle.Text = CONFIG.KEY_GUI_TITLE
-KeyTitle.TextColor3 = Color3.fromRGB(220, 220, 220)
-KeyTitle.TextSize = 13
-KeyTitle.Font = Enum.Font.SourceSansBold
-KeyTitle.TextXAlignment = Enum.TextXAlignment.Left
-KeyTitle.ZIndex = 3
-KeyTitle.Parent = KeyHeader
-
-local KeyCloseButton = Instance.new("TextButton")
-KeyCloseButton.Size = UDim2.new(0, 40, 0, 30)
-KeyCloseButton.Position = UDim2.new(1, -40, 0, 0)
-KeyCloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-KeyCloseButton.BorderSizePixel = 0
-KeyCloseButton.Text = CONFIG.TEXT.CLOSE_BUTTON
-KeyCloseButton.TextColor3 = Color3.fromRGB(220, 220, 220)
-KeyCloseButton.TextSize = 14
-KeyCloseButton.Font = Enum.Font.SourceSansBold
-KeyCloseButton.ZIndex = 3
-KeyCloseButton.Parent = KeyHeader
-
-KeyCloseButton.MouseEnter:Connect(function()
-    KeyCloseButton.BackgroundColor3 = Color3.fromRGB(232, 17, 35)
-end)
-
-KeyCloseButton.MouseLeave:Connect(function()
-    KeyCloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-end)
-
-KeyCloseButton.MouseButton1Click:Connect(function()
-    KeySystemGui:Destroy()
-end)
-
-local KeyBox = Instance.new("TextBox")
-KeyBox.Size = UDim2.new(1, -30, 0, 30)
-KeyBox.Position = UDim2.new(0, 15, 0, 42)
-KeyBox.BackgroundColor3 = Color3.fromRGB(43, 43, 45)
-KeyBox.BorderSizePixel = 1
-KeyBox.BorderColor3 = Color3.fromRGB(60, 60, 65)
-KeyBox.PlaceholderText = "Enter key here..."
-KeyBox.PlaceholderColor3 = Color3.fromRGB(130, 130, 130)
-KeyBox.Text = ""
-KeyBox.TextColor3 = Color3.fromRGB(240, 240, 240)
-KeyBox.TextSize = 13
-KeyBox.Font = Enum.Font.SourceSans
-KeyBox.ClearTextOnFocus = false
-KeyBox.ZIndex = 2
-KeyBox.Parent = KeyFrame
-
--- Submit Button close to the textbox
-local SubmitButton = Instance.new("TextButton")
-SubmitButton.Size = UDim2.new(1, -30, 0, 30)
-SubmitButton.Position = UDim2.new(0, 15, 0, 80)
-SubmitButton.BackgroundColor3 = Color3.fromRGB(51, 51, 55)
-SubmitButton.BorderSizePixel = 1
-SubmitButton.BorderColor3 = Color3.fromRGB(65, 65, 70)
-SubmitButton.Text = "Submit Key"
-SubmitButton.TextColor3 = Color3.fromRGB(240, 240, 240)
-SubmitButton.TextSize = 13
-SubmitButton.Font = Enum.Font.SourceSansBold
-SubmitButton.ZIndex = 2
-SubmitButton.Parent = KeyFrame
-
--- Key Link Text Label positioned a bit lower than the submit button with a bigger font size
-local KeyLinkText = Instance.new("TextLabel")
-KeyLinkText.Size = UDim2.new(1, -30, 0, 22)
-KeyLinkText.Position = UDim2.new(0, 15, 0, 124)
-KeyLinkText.BackgroundTransparency = 1
-KeyLinkText.Text = CONFIG.KEY_LINK_TEXT
-KeyLinkText.TextColor3 = CONFIG.KEY_LINK_TEXT_COLOR
-KeyLinkText.TextSize = 14
-KeyLinkText.Font = Enum.Font.SourceSansBold
-KeyLinkText.TextXAlignment = Enum.TextXAlignment.Center
-KeyLinkText.ZIndex = 2
-KeyLinkText.Parent = KeyFrame
-
-local KeyStatusLabel = Instance.new("TextLabel")
-KeyStatusLabel.Size = UDim2.new(1, -30, 0, 20)
-KeyStatusLabel.Position = UDim2.new(0, 15, 0, 156)
-KeyStatusLabel.BackgroundTransparency = 1
-KeyStatusLabel.Text = ""
-KeyStatusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
-KeyStatusLabel.TextSize = 12
-KeyStatusLabel.Font = Enum.Font.SourceSans
-KeyStatusLabel.TextXAlignment = Enum.TextXAlignment.Center
-KeyStatusLabel.ZIndex = 2
-KeyStatusLabel.Parent = KeyFrame
-
-SubmitButton.MouseButton1Click:Connect(function()
-    local enteredKey = KeyBox.Text
-    local isValid = false
-
-    for _, validKey in ipairs(CONFIG.VALID_KEYS) do
-        if enteredKey == validKey then
-            isValid = true
-            break
-        end
-    end
-
-    if isValid then
-        KeySystemGui:Destroy()
-        launchMainGUI()
-    else
-        KeyStatusLabel.Text = "Invalid Key! Please try again."
-    end
-end)
-
-
--- =========================================================
--- MAIN GUI FUNCTIONALITY (Loads after successful key check)
--- =========================================================
-
-launchMainGUI = function()
+local function launchMainGUI()
     local LogsFrame = nil
     local speedPurchaseEnabled = false
     local carryPurchaseEnabled = false
     local rebirthEnabled = false
+    local baseUpgradeEnabled = false
     local customSound = nil
 
     local function formatAssetId(id)
@@ -580,6 +431,41 @@ launchMainGUI = function()
         addLog("Triggered: Check Item Worth", false)
     end)
 
+    local teleportSafeZoneButton = createButton(CONFIG.TEXT.TELEPORT_SAFEZONE_BUTTON)
+    teleportSafeZoneButton.MouseButton1Click:Connect(function()
+        local targetPart = nil
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj.Name == "SafeZone" and (obj:IsA("BasePart") or obj:IsA("Model")) then
+                if obj:IsA("Model") then
+                    targetPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                else
+                    targetPart = obj
+                end
+                if targetPart then
+                    break
+                end
+            end
+        end
+
+        if targetPart then
+            local character = LocalPlayer.Character
+            if character then
+                local rootPart = character:FindFirstChild("HumanoidRootPart")
+                if rootPart then
+                    local cf = targetPart:IsA("Model") and targetPart:GetModelCFrame() or targetPart.CFrame
+                    rootPart.CFrame = cf + Vector3.new(0, 3, 0)
+                    addLog("Teleported to SafeZone part successfully", false)
+                else
+                    addLog("HumanoidRootPart not found", true)
+                end
+            else
+                addLog("Character not found", true)
+            end
+        else
+            addLog("SafeZone part not found in workspace", true)
+        end
+    end)
+
     -- Object Cleanup Section
     createSection(CONFIG.SECTION_OBJECT_CLEANUP)
 
@@ -639,7 +525,7 @@ launchMainGUI = function()
         addLog("RebirthGates cleanup found " .. found .. " and removed " .. removed, false)
     end)
 
-    -- Movement Section
+    -- Movement Section (Includes WalkSpeed & JumpPower)
     createSection(CONFIG.SECTION_MOVEMENT)
     createLabel(CONFIG.TEXT.WALKSPEED_LABEL)
 
@@ -665,6 +551,32 @@ launchMainGUI = function()
         end
         humanoid.WalkSpeed = value
         addLog("WalkSpeed set to " .. value, false)
+    end)
+
+    createLabel(CONFIG.TEXT.JUMPPOWER_LABEL)
+    local jumpPowerBox = createTextBox(CONFIG.TEXT.JUMPPOWER_PLACEHOLDER)
+    jumpPowerBox.Text = CONFIG.DEFAULT_JUMPPOWER
+
+    local setJumpPowerButton = createButton(CONFIG.TEXT.SET_JUMPPOWER_BUTTON)
+    setJumpPowerButton.MouseButton1Click:Connect(function()
+        local value = tonumber(jumpPowerBox.Text)
+        if not value then
+            addLog("Invalid JumpPower value", true)
+            return
+        end
+        local character = LocalPlayer.Character
+        if not character then
+            addLog("Character not found", true)
+            return
+        end
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then
+            addLog("Humanoid not found", true)
+            return
+        end
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = value
+        addLog("JumpPower set to " .. value, false)
     end)
 
     -- Autofarm Section
@@ -736,7 +648,29 @@ launchMainGUI = function()
         end
     end)
 
-    -- Utility Section
+    local baseUpgradeButton = createButton(CONFIG.TEXT.BASE_UPGRADE_TOGGLE_OFF)
+    baseUpgradeButton.MouseButton1Click:Connect(function()
+        baseUpgradeEnabled = not baseUpgradeEnabled
+        if baseUpgradeEnabled then
+            baseUpgradeButton.Text = CONFIG.TEXT.BASE_UPGRADE_TOGGLE_ON
+        else
+            baseUpgradeButton.Text = CONFIG.TEXT.BASE_UPGRADE_TOGGLE_OFF
+        end
+        addLog("Auto Base Upgrade: " .. (baseUpgradeEnabled and "ON" or "OFF"), false)
+    end)
+
+    task.spawn(function()
+        while ScreenGui.Parent do
+            if baseUpgradeEnabled then
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestBaseUpgrade"):FireServer()
+                end)
+            end
+            task.wait(CONFIG.AUTOMATION_DELAY)
+        end
+    end)
+
+    -- Utility Section (Includes Logs, FOV, and Dex Explorer)
     createSection(CONFIG.SECTION_UTILITY)
 
     local logsButton = createButton(CONFIG.TEXT.OPEN_LOGS_BUTTON)
@@ -762,30 +696,12 @@ launchMainGUI = function()
         addLog("FOV set to " .. value, false)
     end)
 
-    createLabel(CONFIG.TEXT.JUMPPOWER_LABEL)
-    local jumpPowerBox = createTextBox(CONFIG.TEXT.JUMPPOWER_PLACEHOLDER)
-    jumpPowerBox.Text = "50"
-
-    local setJumpPowerButton = createButton(CONFIG.TEXT.SET_JUMPPOWER_BUTTON)
-    setJumpPowerButton.MouseButton1Click:Connect(function()
-        local value = tonumber(jumpPowerBox.Text)
-        if not value then
-            addLog("Invalid JumpPower value", true)
-            return
-        end
-        local character = LocalPlayer.Character
-        if not character then
-            addLog("Character not found", true)
-            return
-        end
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if not humanoid then
-            addLog("Humanoid not found", true)
-            return
-        end
-        humanoid.UseJumpPower = true
-        humanoid.JumpPower = value
-        addLog("JumpPower set to " .. value, false)
+    local dexExplorerButton = createButton(CONFIG.TEXT.DEX_EXPLORER_BUTTON)
+    dexExplorerButton.MouseButton1Click:Connect(function()
+        pcall(function()
+            loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))()
+        end)
+        addLog("Triggered: Dex Explorer loaded", false)
     end)
 
     -- Customization Section
@@ -825,6 +741,7 @@ launchMainGUI = function()
         speedPurchaseEnabled = false
         carryPurchaseEnabled = false
         rebirthEnabled = false
+        baseUpgradeEnabled = false
         if customSound then
             pcall(function()
                 customSound:Stop()
@@ -839,3 +756,6 @@ launchMainGUI = function()
         ScreenGui:Destroy()
     end)
 end
+
+-- Immediately launch the GUI without the key system
+launchMainGUI()
