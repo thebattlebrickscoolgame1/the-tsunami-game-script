@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local CONFIG = {
     -- Add or edit your valid keys here easily:
-    VALID_KEYS = { 
+    VALID_KEYS = {
         "8f4c9b2e1a7d6f3c5e8b0a9d2f4c1e7b6a3d9f8c5e2b1a4d7f0c3e6b9a2d5f8c"
     },
 
@@ -26,6 +26,7 @@ local CONFIG = {
     GUI_TITLE = "THE TSUNAMI GAME - MAIN GUI",
     KEY_GUI_TITLE = "THE TSUNAMI GAME - KEY SYSTEM",
 
+    SECTION_SHORTCUTS = "SHORTCUTS",
     SECTION_OBJECT_CLEANUP = "BURDEN REMOVAL",
     SECTION_MOVEMENT = "MOVEMENT",
     SECTION_AUTOFARM = "AUTOFARM",
@@ -47,6 +48,10 @@ local CONFIG = {
         CLEAR_LOGS_BUTTON = "Clear Logs",
         LOGS_TITLE = "Logs",
 
+        SELL_INVENTORY_BUTTON = "Sell Inventory",
+        SELL_EQUIPPED_BUTTON = "Sell Current Item",
+        CHECK_WORTH_BUTTON = "Check Item Worth",
+
         DELETE_TSUNAMIS_BUTTON = "Delete Tsunamis",
         DELETE_BARIO_LEECH_BUTTON = "UHH SOME BULLSHIT IDK!",
         DELETE_FRAUDPARTS_BUTTON = "Delete FraudParts",
@@ -58,6 +63,9 @@ local CONFIG = {
 
         SPEED_PURCHASE_TOGGLE_OFF = "Auto Speed Purchase: OFF",
         SPEED_PURCHASE_TOGGLE_ON = "Auto Speed Purchase: ON",
+
+        CARRY_PURCHASE_TOGGLE_OFF = "Auto Carry Purchase: OFF",
+        CARRY_PURCHASE_TOGGLE_ON = "Auto Carry Purchase: ON",
 
         REBIRTH_TOGGLE_OFF = "Auto Rebirth: OFF",
         REBIRTH_TOGGLE_ON = "Auto Rebirth: ON",
@@ -232,6 +240,7 @@ end)
 launchMainGUI = function()
     local LogsFrame = nil
     local speedPurchaseEnabled = false
+    local carryPurchaseEnabled = false
     local rebirthEnabled = false
     local customSound = nil
 
@@ -544,6 +553,33 @@ launchMainGUI = function()
         addLog("Logs ready", false)
     end
 
+    -- Shortcuts Section
+    createSection(CONFIG.SECTION_SHORTCUTS)
+
+    local sellInventoryButton = createButton(CONFIG.TEXT.SELL_INVENTORY_BUTTON)
+    sellInventoryButton.MouseButton1Click:Connect(function()
+        pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestSell"):FireServer("Inventory")
+        end)
+        addLog("Triggered: Sell Inventory", false)
+    end)
+
+    local sellEquippedButton = createButton(CONFIG.TEXT.SELL_EQUIPPED_BUTTON)
+    sellEquippedButton.MouseButton1Click:Connect(function()
+        pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestSell"):FireServer("Equipped")
+        end)
+        addLog("Triggered: Sell Current Item", false)
+    end)
+
+    local checkWorthButton = createButton(CONFIG.TEXT.CHECK_WORTH_BUTTON)
+    checkWorthButton.MouseButton1Click:Connect(function()
+        pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestSell"):FireServer("ItemWorth")
+        end)
+        addLog("Triggered: Check Item Worth", false)
+    end)
+
     -- Object Cleanup Section
     createSection(CONFIG.SECTION_OBJECT_CLEANUP)
 
@@ -650,6 +686,28 @@ launchMainGUI = function()
             if speedPurchaseEnabled then
                 pcall(function()
                     game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PurchaseSpeed"):FireServer(CONFIG.SPEED_PURCHASE_AMOUNT)
+                end)
+            end
+            task.wait(CONFIG.AUTOMATION_DELAY)
+        end
+    end)
+
+    local carryPurchaseButton = createButton(CONFIG.TEXT.CARRY_PURCHASE_TOGGLE_OFF)
+    carryPurchaseButton.MouseButton1Click:Connect(function()
+        carryPurchaseEnabled = not carryPurchaseEnabled
+        if carryPurchaseEnabled then
+            carryPurchaseButton.Text = CONFIG.TEXT.CARRY_PURCHASE_TOGGLE_ON
+        else
+            carryPurchaseButton.Text = CONFIG.TEXT.CARRY_PURCHASE_TOGGLE_OFF
+        end
+        addLog("Auto Carry Purchase: " .. (carryPurchaseEnabled and "ON" or "OFF"), false)
+    end)
+
+    task.spawn(function()
+        while ScreenGui.Parent do
+            if carryPurchaseEnabled then
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PurchaseCarry"):FireServer()
                 end)
             end
             task.wait(CONFIG.AUTOMATION_DELAY)
@@ -765,6 +823,7 @@ launchMainGUI = function()
     -- Close Button Action
     CloseButton.MouseButton1Click:Connect(function()
         speedPurchaseEnabled = false
+        carryPurchaseEnabled = false
         rebirthEnabled = false
         if customSound then
             pcall(function()
